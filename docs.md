@@ -14,20 +14,44 @@
   * [`send(peer, msg[, msgID = ''])`](#sendpeer-msg-msgid--)
   * [`destroy()`](#destroy)
 
-## Class: `P2PT extends EventEmitter`
-The P2PT class is defined and exposed by the `p2pt` module :
-```javascript
-import P2PT from 'p2pt'
+## Class: `EasyMsg`
+To use `EasyMsg`, you must have `EasyMsg.js` imported. It is defined as a global variable.
+
+### `constructor(configuration, autoConfig, debug)`
+*Client:* Sends out offer and waits for server to respond and connect.
+
+*Server:* Starts listening for client offers and connects to any identified clients.
+* **Arguments:**
+  * **configuration:** `ConnectConfig`
+    * **Description:** Specifies library configuration.
+    * **Default:** `undefined`
+  * **autoConfig:** `Bool`
+    * **Description:** Automatically configures the library if configuration is undefined.*
+    * **Default:** `true`
+  * **debug:** `Bool`
+    * **Description:** Enables debug mode, which makes the library much more verbose with console.log().
+    * **Default:** `false`
+* **Returns:** `void`
+* **Example:**
+```js
+// without default values specified
+const normal_lib = new EasyMsg()
+
+// with default values specified
+const same_as_normal_lib = new EasyMsg(null, true, false)
+
+// configuration: null, autoConfig: true, debug: true
+const debug_lib = new EasyMsg(null, true, true)
+
+const config = new ConnectConfig()
+config.signallingCustomFunction = some_custom_signalling_function
+config.iceConfig = something_quirky
+const custom_lib = new EasyMsg(config)
+
 ```
-In Typescript, you can use
-```typescript
-import P2PT from "p2pt";
-```
+* **Notes**: *Or any equivalent `false` value.
 
-This is the base class that needs to be instantiated to use this library. It provides the API to implement P2P connections, communicate messages (even large content!) using WebTorrent WebSocket Trackers as the signalling server.
-
-
-### `start(connectCallback)`
+### `async start(connectCallback)`
 *Client:* Sends out offer and waits for server to respond and connect.
 
 *Server:* Starts listening for client offers and connects to any identified clients.
@@ -35,7 +59,7 @@ This is the base class that needs to be instantiated to use this library. It pro
   * **connectCallback:** `Function`
     * **Description:** Callback for new connections.
     * **Default:** `undefined`
-* **Returns:** `void`
+* **Returns:** `Promise`
 * **Example:**
 ```js
 const config = new ConnectConfig()
