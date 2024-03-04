@@ -78,6 +78,41 @@ console.log("lib has started; waiting for new peers")
 ```
 * **Notes**: `connectCallback` is a function that takes one argument, `peer`, which represents the newly connected peer. The `start` function is asynchronous and thus awaitable.
 
+### `connectById(id)`
+*Server:* Sets an id to connect to. Only clients with this id will have connections made to them.
+* **Arguments:**
+  * **id:** `String`
+    * **Description:** Id to connect to.
+    * **Default:** `undefined`
+* **Returns:** `void`
+* **Example:**
+```js
+// only connect to unhappy clients
+lib.connectById(":(")
+```
+
+### `connectByPattern(regex)`
+*Server:* Sets a mask to connect to. Only clients that match will have connections made to them.
+* **Arguments:**
+  * **regex:** `RegExp`
+    * **Description:** New mask.
+    * **Default:** `undefined`
+* **Returns:** `void`
+* **Example:**
+```js
+// only connect to clients with 4-letter names
+lib.connectByPattern(/hello my name is ....!/)
+```
+
+### `connectToAll()`
+*Server:* Makes EasyMsg attempt to connect to all clients, regardless of id.
+* **Returns:** `void`
+* **Example:**
+```js
+// connect without filter
+lib.connectToAll()
+```
+
 ### Event: `peerconnect`
 This event is emitted when a new peer connects.
 
