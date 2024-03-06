@@ -47,7 +47,6 @@ const config = new ConnectConfig()
 config.signallingCustomFunction = some_custom_signalling_function
 config.iceConfig = something_quirky
 const custom_lib = new EasyMsg(config)
-
 ```
 * **Notes**: *Or any equivalent `false` value.
 
@@ -73,8 +72,6 @@ function new_peer(peer) {
 lib.type = "server" // comment this line out and run in another tab
 await lib.start(new_peer)
 console.log("lib has started; waiting for new peers")
-
-
 ```
 * **Notes**: `connectCallback` is a function that takes one argument, `peer`, which represents the newly connected peer. The `start` function is asynchronous and thus awaitable.
 
@@ -111,6 +108,124 @@ lib.connectByPattern(/hello my name is ....!/)
 ```js
 // connect without filter
 lib.connectToAll()
+```
+
+### `disconnectFromId(id)`
+*Client:* Disconnects from server.
+
+*Server:*  Disconnects from specified id.
+* **Arguments:**
+  * **id:** `String`
+    * **Description:** Id to disconnect from.
+    * **Default:** `undefined`
+* **Returns:** `void`
+* **Example:**
+```js
+// disconnect from the King of Babylon
+lib.connectById("Nebuchadnezzar")
+```
+
+### `disconnectFromAll()`
+*Client:* Disconnects from server.
+
+*Server:*  Disconnects from all clients.
+* **Returns:** `void`
+* **Example:**
+```js
+// shutdown
+lib.disconnectFromAll()
+// shutdown the signaller to avoid trying to call a library callback
+signaller.shutdown()
+// alternatively, clear the signal callback
+lib._internalConnect = () => {}
+// safely remove lib from memory
+delete lib
+```
+
+### `sendMessage(msg, peer)`
+*Client:* Sends message to specified peer (server). Clients should not use this function; use `broadcastMessage` instead.
+
+*Server:*  Sends message to specified peer (client).
+* **Arguments:**
+  * **msg:** `String`
+    * **Description:** Message to send.
+    * **Default:** `undefined`
+  * **peer:** `Peer`
+    * **Description:** Peer to send message to.
+    * **Default:** `undefined`
+* **Returns:** `Bool` indicating successful message send.
+* **Example:**
+```js
+const config = new ConnectConfig()
+config.signallingCustomFunction = your_signalling_function
+const lib = new EasyMsg(config) // scope of current browser
+
+function new_peer(peer) {
+  lib.sendMessage("you have ID: " + peer.ID, peer)
+}
+
+lib.type = "server" // comment this line out and run in another tab
+if(lib.type == "client") {
+  lib.addReceiveMessageCallback(m=>console.log(m.data))
+}
+await lib.start(new_peer)
+console.log("lib has started; waiting for new peers")
+```
+
+### `broadcastMessage(msg)`
+*Client:* Sends message to server.
+
+*Server:*  Sends message to all clients.
+* **Arguments:**
+  * **msg:** `String`
+    * **Description:** Message to send.
+    * **Default:** `undefined`
+* **Returns:** `Bool` if client, indicating successful message send; `void` if server.
+* **Example:**
+```js
+// tell everyone to drink water
+lib.broadcastMessage("drink water please")
+```
+
+### `addReceiveMessageCallback(msgCallback)`
+Sets the receive message callback; enables library to receive other peer's messages.
+* **Arguments:**
+  * **msgCallback:** `Function`
+    * **Description:** Message callback that will be set.
+    * **Default:** `undefined`
+* **Returns:** `void`
+* **Example:**
+```js
+const config = new ConnectConfig()
+config.signallingCustomFunction = your_signalling_function
+const lib = new EasyMsg(config) // scope of current browser
+
+function new_peer(peer) {
+  lib.sendMessage("you have ID: " + peer.ID, peer)
+}
+
+lib.type = "server" // comment this line out and run in another tab
+if(lib.type == "client") {
+  lib.addReceiveMessageCallback(m=>console.log(m.data))
+}
+await lib.start(new_peer)
+console.log("lib has started; waiting for new peers")
+```
+
+### `autoConfig(setConfig)`
+Turns autoConfig on/off.
+* **Arguments:**
+  * **setConfig:** `Bool`
+    * **Description:** `true`: autoConfig turned on; `false`: autoConfig turned off.
+    * **Default:** `undefined`
+* **Returns:** `void`
+* **Example:**
+```js
+// initially create library with autoConfig
+const lib = new EasyMsg()
+// decide to manually set configuration
+lib.autoConfig = false
+lib.configuration = new ConnectConfig()
 ```
 
 ### Event: `peerconnect`
