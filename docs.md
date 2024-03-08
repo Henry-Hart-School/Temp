@@ -15,7 +15,7 @@
   * [`destroy()`](#destroy)
 
 ## Class: `EasyMsg`
-To use `EasyMsg`, you must have `EasyMsg.js` imported. It is defined as a global variable.
+To use `EasyMsg`, you must have `EasyMsg.js` imported. It is defined as a global variable. This is the core library.
 
 ### `constructor(configuration, autoConfig, debug)`
 *Client:* Sends out offer and waits for server to respond and connect.
@@ -231,13 +231,13 @@ lib.iceConfig = something_custom
 ```
 
 ## Class: `Peer`
-This class is imported with `EasyMsg`.
+This class is imported with `EasyMsg`. This represents an individual peer (client/server).
 
 ### `con`
 The Peer's RTCPeerConnection object.
 * **Example:**
 ```js
-connectionCallback = async peer => {
+const connectionCallback = async peer => {
   // get some info about newly connected peers
   console.log(await peer.con.getStats())
 }
@@ -247,7 +247,7 @@ connectionCallback = async peer => {
 The Peer's RTCDataChannel object.
 * **Example:**
 ```js
-connectionCallback = async peer => {
+const connectionCallback = async peer => {
   // log the channel for further inspection
   console.log(peer.channel)
 }
@@ -258,11 +258,11 @@ Determines whether the peer is in debug mode, being more verbose with console.lo
 * **Example:**
 ```js
 // debug mode library
-lib = new EasyMsg(null, true, true)
+const lib = new EasyMsg(null, true, true)
 
 // ...
 
-connectionCallback = peer => {
+const connectionCallback = peer => {
   // only need to debug lib, not peers
   peer.debug = false
 }
@@ -272,7 +272,7 @@ connectionCallback = peer => {
 Specifies whether the peer is connected or not.
 * **Example:**
 ```js
-connectionCallback = peer => {
+const connectionCallback = peer => {
   // check whether we are connected every second
   peer.__tmp_interval = setInterval(()=>{
     if(!peer.connected) {
@@ -284,37 +284,98 @@ connectionCallback = peer => {
 ```
 
 ## Class: `ConnectConfig`
-This class is imported with `EasyMsg`.
+This class is imported with `EasyMsg`. This is used for the configuration of `EasyMsg`.
 
 ### `iceConfig`
-Specifies whether the peer is connected or not.
+Configuration of RTCPeerConnection object.
 * **Example:**
 ```js
-connectionCallback = peer => {
-  // check whether we are connected every second
-  peer.__tmp_interval = setInterval(()=>{
-    if(!peer.connected) {
-      console.log("LOST CONNECTION")
-      clearInterval(peer.__tmp_interval)
-    }
-  }, 1000);
-}
+const config = new ConnectConfig()
+config.iceConfig = {
+    iceServers: [
+        { // google STUN server
+          urls: "stun.l.google.com:19302"
+        }
+    ],
+};
+const lib = new EasyMsg(config)
 ```
 
-### `signallingCustomFunction`
-Specifies whether the peer is connected or not.
+### `signallingCustomFunction(callback, action, data, repeat)`
+Function used to control signalling. This is dynamically set by the developer (you). Alternatively, use `InbuiltSignalling`.
+* **Arguments:**
+  * **callback:** `Function`
+    * **Description:** Callback for reception of offers/answers along signalling channel. This callback is set when *signallingAction.OnReceive* is specified.
+    * **Default:** `undefined`
+  * **action:** `signallingAction int`
+    * **Description:** The action to perform. Can be either *signallingAction.Send* or *signallingAction.OnReceive*.
+    * **Default:** `undefined`
+  * **data:** `Object`
+    * **Description:** Data to transmit over signalling channel. This is used when *signallingAction.OnReceive* is specified.
+    * **Default:** `undefined`
+  * **repeat:** `Bool`
+    * **Description:** Specifies whether to repeatedly transmit data over signalling channel, at an interval you choose. This is most commonly used for clients to repeatedly send out their offers for newly added servers to detect them.
+    * **Default:** `undefined`
+* **Returns:** `void`.
 * **Example:**
 ```js
-connectionCallback = peer => {
-  // check whether we are connected every second
-  peer.__tmp_interval = setInterval(()=>{
-    if(!peer.connected) {
-      console.log("LOST CONNECTION")
-      clearInterval(peer.__tmp_interval)
+// this uses a made-up 'channel' object
+// create an interface for 'channel'
+function signal_func(callback, action, data, repeat) {
+    if (action === signallingAction.Send) {
+        // when we are told to send data...
+        const send_func = () => {
+            // ...send data over channel
+            channel.send(data)
+        }
+        if(repeat) setInterval(send_func, 60 * 1000);
+        send_func()
+    } else if (action === signallingAction.OnReceive) {
+        // when we receive data...
+        channel.onreceive = data => {
+            // ...call the callback
+            callback(data)
+        }
+    } else {
+        // do nothing, invalid signallingAction specified
     }
-  }, 1000);
 }
+const config = new ConnectConfig()
+config.signallingCustomFunction = signal_func
+const lib = new EasyMsg(config)
 ```
+
+## Enum: `signallingType`
+This specifies different signalling methods.
+* Unset: -1
+  * Signalling type not specified.
+* WebTorrent: 0
+  * Not implemented.
+* OpenHttp: 1
+  * Not implemented.
+* OpenTCP_UDP: 2
+  * Not implemented.
+* Firebase: 3
+  * Uses Firebase Realtime Database as signalling channel.
+* ScratchSW: 4
+
+* Relay: 5
+  * Not implemented.
+* Custom: 6
+  * Not implemented with `InbuiltSignalling`. Custom signalling implementations should directly interface with *ConnectConfig.signallingCustomFunction*.
+
+## Enum: `signallingAction`
+This specifies different signalling actions.
+* Send: 0
+  * Tells *ConnectConfig.signallingCustomFunction* to send data.
+* OnReceive: 1
+  * Tells *ConnectConfig.signallingCustomFunction* to set a data reception callback.
+* Find: 2
+  * Not implemented.
+* Ask: 3
+  * Not implemented.
+* Answer: 4
+  * Not implemented.
 
 ### Event: `peerconnect`
 This event is emitted when a new peer connects.
