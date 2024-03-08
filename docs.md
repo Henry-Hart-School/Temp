@@ -137,7 +137,8 @@ lib.disconnectFromAll()
 // shutdown the signaller to avoid trying to call a library callback
 signaller.shutdown()
 // alternatively, clear the signal callback
-lib._internalConnect = () => {}
+const signal = lib.configuration.signallingCustomFunction
+signal(()=>{}, signallingAction.OnReceive)
 // safely remove lib from memory
 delete lib
 ```
@@ -226,6 +227,93 @@ const lib = new EasyMsg()
 // decide to manually set configuration
 lib.autoConfig = false
 lib.configuration = new ConnectConfig()
+lib.iceConfig = something_custom
+```
+
+## Class: `Peer`
+This class is imported with `EasyMsg`.
+
+### `con`
+The Peer's RTCPeerConnection object.
+* **Example:**
+```js
+connectionCallback = async peer => {
+  // get some info about newly connected peers
+  console.log(await peer.con.getStats())
+}
+```
+
+### `channel`
+The Peer's RTCDataChannel object.
+* **Example:**
+```js
+connectionCallback = async peer => {
+  // log the channel for further inspection
+  console.log(peer.channel)
+}
+```
+
+### `debug`
+Determines whether the peer is in debug mode, being more verbose with console.log().
+* **Example:**
+```js
+// debug mode library
+lib = new EasyMsg(null, true, true)
+
+// ...
+
+connectionCallback = peer => {
+  // only need to debug lib, not peers
+  peer.debug = false
+}
+```
+
+### `connected`
+Specifies whether the peer is connected or not.
+* **Example:**
+```js
+connectionCallback = peer => {
+  // check whether we are connected every second
+  peer.__tmp_interval = setInterval(()=>{
+    if(!peer.connected) {
+      console.log("LOST CONNECTION")
+      clearInterval(peer.__tmp_interval)
+    }
+  }, 1000);
+}
+```
+
+## Class: `ConnectConfig`
+This class is imported with `EasyMsg`.
+
+### `iceConfig`
+Specifies whether the peer is connected or not.
+* **Example:**
+```js
+connectionCallback = peer => {
+  // check whether we are connected every second
+  peer.__tmp_interval = setInterval(()=>{
+    if(!peer.connected) {
+      console.log("LOST CONNECTION")
+      clearInterval(peer.__tmp_interval)
+    }
+  }, 1000);
+}
+```
+
+### `signallingCustomFunction`
+Specifies whether the peer is connected or not.
+* **Example:**
+```js
+connectionCallback = peer => {
+  // check whether we are connected every second
+  peer.__tmp_interval = setInterval(()=>{
+    if(!peer.connected) {
+      console.log("LOST CONNECTION")
+      clearInterval(peer.__tmp_interval)
+    }
+  }, 1000);
+}
 ```
 
 ### Event: `peerconnect`
