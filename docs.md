@@ -358,7 +358,7 @@ This specifies different signalling methods.
 * Firebase: 3
   * Uses Firebase Realtime Database as signalling channel.
 * ScratchSW: 4
-
+  * Not implemented.
 * Relay: 5
   * Not implemented.
 * Custom: 6
@@ -376,6 +376,26 @@ This specifies different signalling actions.
   * Not implemented.
 * Answer: 4
   * Not implemented.
+
+## Class: `InbuiltSignalling`
+This class is imported with `EasyMsg`. This is used for the configuration of `EasyMsg`.
+
+### `iceConfig`
+Configuration of RTCPeerConnection object.
+* **Example:**
+```js
+const firebaseConfig = {
+    databaseURL: "https://easymsgdb-default-rtdb.europe-west1.firebasedatabase.app"
+}
+
+// set up signalling
+const signaller = new InbuiltSignalling(signallingType.Firebase)
+await signaller.start(firebaseConfig)
+config.signallingCustomFunction = signaller.signallingCustomFunction
+
+// start lib
+const lib = new EasyMsg(config, true, true)
+```
 
 ### Event: `peerconnect`
 This event is emitted when a new peer connects.
