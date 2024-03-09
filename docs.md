@@ -1,19 +1,5 @@
 # Documentation
 
-* [Class: `P2PT extends EventEmitter`](#class-p2pt-extends-eventemitter)
-  * [Event: `peerconnect`](#event-peerconnect)
-  * [Event: `data`](#event-data)
-  * [Event: `msg`](#event-msg)
-  * [Event: `peerclose`](#event-peerclose)
-  * [Event: `trackerconnect`](#event-trackerconnect)
-  * [Event: `trackerwarning`](#event-trackerwarning)
-  * [`new P2PT(announceURLs = [], identifierString = '')`](#new-p2ptannounceurls---identifierstring--)
-  * [`setIdentifier(identifierString)`](#setidentifieridentifierstring)
-  * [`start()`](#start)
-  * [`requestMorePeers()`](#requestmorepeers)
-  * [`send(peer, msg[, msgID = ''])`](#sendpeer-msg-msgid--)
-  * [`destroy()`](#destroy)
-
 ## Class: `EasyMsg`
 To use `EasyMsg`, you must have `EasyMsg.js` imported. It is defined as a global variable. This is the core library.
 
@@ -230,11 +216,44 @@ lib.configuration = new ConnectConfig()
 lib.iceConfig = something_custom
 ```
 
+### `peers`
+*Client:* Unused.
+
+*Server:* An array of all clients (that have been identified by the signalling channel, so not necessarily connected ones).
+* **Type:** `Array`
+* **Example:**
+```js
+// set up lib, start server
+// ...
+
+// log all connected clients after 10 minutes
+setTimeout(()=>console.log(lib.peers.filter(peer=>peer.connected)), 60 * 10 * 1000)
+```
+
+
+### `peer_id_map`
+*Client:* A map containing either zero entries or one entry: the server, identified by *"SERVER"*.
+
+*Server:* A map containing all peers that have previously connected. Often more efficient for finding a peer from an ID than iterating through `peers`.
+* **Type:** `Object`
+* **Example:**
+```js
+// set up lib
+// ...
+
+// disconnect the peer with ID 12345678, if it exists
+const disconnect_ID = 12345678
+if (lib.peer_id_map[disconnect_ID]) {
+  lib.disconnectFromID(disconnect_ID)
+}
+```
+
 ## Class: `Peer`
 This class is imported with `EasyMsg`. This represents an individual peer (client/server).
 
 ### `con`
 The Peer's RTCPeerConnection object.
+* **Type:** `RTCPeerConnection`
 * **Example:**
 ```js
 const connectionCallback = async peer => {
@@ -245,6 +264,7 @@ const connectionCallback = async peer => {
 
 ### `channel`
 The Peer's RTCDataChannel object.
+* **Type:** `RTCDataChannel`
 * **Example:**
 ```js
 const connectionCallback = async peer => {
@@ -255,6 +275,7 @@ const connectionCallback = async peer => {
 
 ### `debug`
 Determines whether the peer is in debug mode, being more verbose with console.log().
+* **Type:** `Bool`
 * **Example:**
 ```js
 // debug mode library
@@ -270,6 +291,7 @@ const connectionCallback = peer => {
 
 ### `connected`
 Specifies whether the peer is connected or not.
+* **Type:** `Bool`
 * **Example:**
 ```js
 const connectionCallback = peer => {
@@ -288,6 +310,7 @@ This class is imported with `EasyMsg`. This is used for the configuration of `Ea
 
 ### `iceConfig`
 Configuration of RTCPeerConnection object.
+* **Type:** `Object`
 * **Example:**
 ```js
 const config = new ConnectConfig()
@@ -346,7 +369,7 @@ const lib = new EasyMsg(config)
 ```
 
 ## Enum: `signallingType`
-This specifies different signalling methods.
+This specifies different signalling methods. This is imported with `InbuiltSignalling`.
 * Unset: -1
   * Signalling type not specified.
 * WebTorrent: 0
@@ -365,7 +388,7 @@ This specifies different signalling methods.
   * Not implemented with `InbuiltSignalling`. Custom signalling implementations should directly interface with *ConnectConfig.signallingCustomFunction*.
 
 ## Enum: `signallingAction`
-This specifies different signalling actions.
+This specifies different signalling actions. This is imported with `InbuiltSignalling`.
 * Send: 0
   * Tells *ConnectConfig.signallingCustomFunction* to send data.
 * OnReceive: 1
@@ -378,14 +401,19 @@ This specifies different signalling actions.
   * Not implemented.
 
 ## Class: `InbuiltSignalling`
-This class is imported with `EasyMsg`. This is used for the configuration of `EasyMsg`.
+To use `InbuiltSignalling`, you must have `signalling.js` imported. It is defined as a global variable. This class is a signalling wrapper.
 
-### `iceConfig`
-Configuration of RTCPeerConnection object.
+### `constructor(signallingType)`
+Initialises `InbuiltSignalling`.
+* **Arguments:**
+  * **signallingType:** `signallingType int`
+    * **Description:** Specifies signalling type (only *signallingType.Firebase* currently supported).
+    * **Default:** `signallingType.Unset`
+* **Returns:** `void`
 * **Example:**
 ```js
 const firebaseConfig = {
-    databaseURL: "https://easymsgdb-default-rtdb.europe-west1.firebasedatabase.app"
+    databaseURL: "https://somename.somewhere.firebasedatabase.app"
 }
 
 // set up signalling
@@ -397,99 +425,65 @@ config.signallingCustomFunction = signaller.signallingCustomFunction
 const lib = new EasyMsg(config, true, true)
 ```
 
-### Event: `peerconnect`
-This event is emitted when a new peer connects.
-
-Arguments passed to Event Handler: `peer` Object
-
-### Event: `data`
-This event is emitted for every chunk of data received.
-
-Arguments passed to Event Handler: `peer` Object, `data` Object
-
-### Event: `msg`
-This event is emitted once all the chunks are received for a message.
-
-Arguments passed to Event Handler: `peer` Object, `msg` Object
-
-### Event: `peerclose`
-This event is emitted when a peer disconnects.
-
-Arguments passed to Event Handler: `peer` Object
-
-### Event: `trackerconnect`
-This event is emitted when a successful connection to tracker is made.
-
-Arguments passed to Event Handler: `WebSocketTracker` Object, `stats` Object
-
-### Event: `trackerwarning`
-This event is emitted when some error happens with connection to tracker.
-
-Arguments passed to Event Handler: `Error` object, `stats` Object
-
-### `new P2PT(announceURLs = [], identifierString = '')`
-Instantiates the class
+### `async start(options)`
+Starts the signaller.
 * **Arguments:**
-  * **announceURLs:** `Array`
-    * **Description:** List of announce tracker URLs
-    * **Default:** `[]`
-  * **identifierString:** `String`
-    * **Description:** Identifier used to discover peers in the network
-    * **Default:** `''`
+  * **options:** `Object`
+    * **Description:** Further options for the signaller. For *signallingType.Firebase*, these specify the *firebaseConfig* passed into *firebase.initialiseApp* (API [here](https://firebase.google.com/docs/database/web/start#web-namespaced-api)).
+    * **Default:** `undefined`
+* **Returns:** `Promise`
+* **Example:**
+```js
+const firebaseConfig = {
+    databaseURL: "https://somename.somewhere.firebasedatabase.app"
+}
 
-```javascript
-// Find public WebTorrent tracker URLs here : https://github.com/ngosang/trackerslist/blob/master/trackers_all_ws.txt
-const trackersAnnounceURLs = [
-  "wss://tracker.openwebtorrent.com",
-  "wss://tracker.sloppyta.co:443/",
-  "wss://tracker.novage.com.ua:443/",
-  "wss://tracker.btorrent.xyz:443/",
-]
+// set up signalling
+const signaller = new InbuiltSignalling(signallingType.Firebase)
+await signaller.start(firebaseConfig)
+config.signallingCustomFunction = signaller.signallingCustomFunction
 
-// This 'myApp' is called identifier and should be unique to your app
-const p2pt = new P2PT(trackersAnnounceURLs, 'myApp')
+// start lib
+const lib = new EasyMsg(config, true, true)
 ```
 
-In Typescript, the `P2PT` class accepts an optional type parameter to constrain the type of messages you can pass to the `send` function. It doesn't constrain the type of messages you recieve, since any peer *could* send anything.
-```typescript
-type Msg = 'hello' | { goodbye: boolean }
-const p2pt = new P2PT<Msg>(trackersAnnounceURLs, 'myApp')
-// ... find a peer ...
-p2pt.send(peer, 'some_message') // TS typecheck error: Argument of type 'string' is not assignable to parameter of type 'Msg'.
-p2pt.send(peer, 'hello') // ok!
-p2pt.send(peer, { goodbye: true }) // ok!
+
+### `fakeSigChannel`
+Captures all signalling traffic (that goes through `InbuiltSignalling`). This is useful for debugging.
+* **Type:** `SignallingChannel_Fake`
+* **Example:**
+```js
+// set up lib
+// ...
+
+// log all sent messages after 10 minutes
+setTimeout(()=>console.log(signaller.fakeSigChannel.sent), 60 * 10 * 1000)
 ```
 
-### `setIdentifier(identifierString)`
-Sets the identifier string used to discover peers in the network
-* **Arguments:**
-  * **identifierString:** `String`
-    * **Description:** Identifier used to discover peers in the network
-* **Returns:** `void`
+## Class: `SignallingChannel_Fake`
+This class is imported with `InbuiltSignalling`. This is used for the configuration of `EasyMsg`.
 
-### `requestMorePeers()`
-Request More Peers
-* **Arguments:** None
-* **Returns:** `Promise`
-  * **resolve(peers)**
-    * **peers:** Object
+### `sent`
+A live capture of all sent traffic (by the current tab) over the signalling channel.
+* **Type:** `Array`
+* **Example:**
+```js
+// set up lib
+// ...
 
-### `send(peer, msg[, msgID = ''])`
+// log all sent messages after 10 minutes
+setTimeout(()=>console.log(signaller.fakeSigChannel.sent), 60 * 10 * 1000)
+```
 
-* **Arguments:**
-  * **peer:** `Object`
-    * **Description:** Stores information of a Peer
-  * **msg:** `Object`
-    * **Description:** Message to send
-  * **msgID:** `Number`
-    * **Description:** ID of message if it's a response to a previous message. You won't need to pass this
-    * **Default:** `''`
-* **Returns:** `Promise`
-  * **resolve([peer, msg])**
-    * **peer:** `Object`
-    * **msg:** `Object`
 
-### `destroy()`
-Destroy the P2PT Object
-* **Arguments:** None
-* **Returns:** `void`
+### `received`
+A live capture of all received traffic (by the current tab) over the signalling channel.
+* **Type:** `Array`
+* **Example:**
+```js
+// set up lib
+// ...
+
+// log all received messages after 10 minutes
+setTimeout(()=>console.log(signaller.fakeSigChannel.received), 60 * 10 * 1000)
+```
