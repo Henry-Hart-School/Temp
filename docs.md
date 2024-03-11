@@ -248,8 +248,28 @@ if (lib.peer_id_map[disconnect_ID]) {
 }
 ```
 
+### `answerCallback`
+*Client:* Called when the client is about to accept an answer.
+
+*Server:* Unused.
+* **Type:** `Function`
+* **Example:**
+```js
+// log whenever a we are about to connect to a peer
+lib.answerCallback = peer => {console.log("connecting to " + peer.ID)}
+```
+
 ## Class: `Peer`
 This class is imported with `EasyMsg`. This represents an individual peer (client/server).
+
+### `ID`
+The Peer's unique identifier.
+* **Type:** `int`
+* **Example:**
+```js
+// log whenever a we are about to connect to a peer
+lib.answerCallback = peer => {console.log("connecting to " + peer.ID)}
+```
 
 ### `con`
 The Peer's RTCPeerConnection object.
